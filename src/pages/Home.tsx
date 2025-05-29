@@ -6,19 +6,19 @@ const Home: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-slate-900 to-indigo-900">
-      <div className='min-w-[75vw] relative'>
+      <div className='hidden sm:block sm:min-w-[50vw] md:min-w-[65vw] lg:min-w-[75vw] relative'>
         <video
           autoPlay
           muted
           loop
           playsInline
-          className="w-full h-full object-cover object-left min-h-screen"
+          className="w-full h-full object-cover object-center md:object-left min-h-screen"
         >
           <source src="/6396302.mp4" type="video/mp4" />
         </video>
         <div className="absolute inset-0 bg-gradient-to-r from-indigo-900/80 to-black/90"></div>
       </div>
-      <div className="min-h-screen bg-black/80 p-8 shadow-lg space-y-6 min-w-[25vw] flex flex-col">
+      <div className="min-h-screen bg-black/80 p-8 shadow-lg space-y-6 min-w-[100vw] sm:min-w-[50vw] md:min-w-[35vw] lg:min-w-[25vw] flex flex-col">
         <div className='mb-8'>
           <h1 className="text-3xl font-bold text-center text-white/80 mb-2">PeerLink</h1>
           <small className='block w-full text-center text-gray-400'>Video Conference App</small>
