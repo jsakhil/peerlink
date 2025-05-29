@@ -7,10 +7,14 @@ const Viewer: React.FC = () => {
   const [isConnected, setIsConnected] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const peerRef = useRef<Peer | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     return () => {
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach(track => track.stop());
+      }
       if (peerRef.current) {
         peerRef.current.destroy();
       }
@@ -24,6 +28,13 @@ const Viewer: React.FC = () => {
     }
 
     try {
+      // Get local media stream
+      const localStream = await navigator.mediaDevices.getUserMedia({ 
+        video: true, 
+        audio: true 
+      });
+      localStreamRef.current = localStream;
+
       // Create a new peer with a random ID
       const peer = new Peer();
       peerRef.current = peer;
@@ -31,23 +42,17 @@ const Viewer: React.FC = () => {
       peer.on('open', () => {
         console.log('Viewer peer opened with ID:', peer.id);
         
-        // Create a call to the broadcaster with an empty stream
-        const call = peer.call(broadcasterId, new MediaStream(), { metadata: { type: 'viewer' } });
+        // Create a call to the broadcaster with our local stream
+        const call = peer.call(broadcasterId, localStream, { metadata: { type: 'viewer' } });
         console.log('Call initiated to broadcaster:', broadcasterId);
         
         call.on('stream', (remoteStream) => {
           console.log('Received stream from broadcaster');
           if (videoRef.current) {
-            // Set the stream to the video element
             videoRef.current.srcObject = remoteStream;
-            
-            // Configure video element
             videoRef.current.muted = false;
             videoRef.current.volume = 1;
-            videoRef.current.autoplay = true;
-            videoRef.current.playsInline = true;
             
-            // Play the video
             videoRef.current.play()
               .then(() => {
                 console.log('Video playback started successfully');
@@ -66,12 +71,18 @@ const Viewer: React.FC = () => {
           if (videoRef.current) {
             videoRef.current.srcObject = null;
           }
+          if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => track.stop());
+          }
         });
 
         call.on('error', (err) => {
           console.error('Call error:', err);
           alert('Error connecting to broadcaster');
           setIsConnected(false);
+          if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => track.stop());
+          }
         });
       });
 
@@ -79,6 +90,9 @@ const Viewer: React.FC = () => {
         console.error('Peer error:', err);
         alert('Error connecting to broadcaster');
         setIsConnected(false);
+        if (localStreamRef.current) {
+          localStreamRef.current.getTracks().forEach(track => track.stop());
+        }
       });
 
     } catch (error) {
@@ -90,6 +104,9 @@ const Viewer: React.FC = () => {
   const disconnect = () => {
     if (peerRef.current) {
       peerRef.current.destroy();
+    }
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach(track => track.stop());
     }
     setIsConnected(false);
     if (videoRef.current) {

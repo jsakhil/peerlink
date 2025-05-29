@@ -2,10 +2,15 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Peer from 'peerjs';
 
+interface Viewer {
+  id: string;
+  stream: MediaStream;
+}
+
 const Broadcaster: React.FC = () => {
   const [peerId, setPeerId] = useState<string>('');
   const [isStreaming, setIsStreaming] = useState(false);
-  const [viewers, setViewers] = useState<string[]>([]);
+  const [viewers, setViewers] = useState<Viewer[]>([]);
   const videoRef = useRef<HTMLVideoElement>(null);
   const peerRef = useRef<Peer | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -24,23 +29,18 @@ const Broadcaster: React.FC = () => {
 
   const startBroadcasting = async () => {
     try {
-      // Get local media stream
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: true, 
         audio: true 
       });
       
-      // Store the stream reference
       streamRef.current = stream;
-      
-      // Display local video
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        videoRef.current.muted = true; // Mute local video
+        videoRef.current.muted = true;
         await videoRef.current.play();
       }
 
-      // Create peer connection
       const peer = new Peer();
       peerRef.current = peer;
 
@@ -63,23 +63,25 @@ const Broadcaster: React.FC = () => {
           call.answer(streamRef.current);
           console.log('Answered call with stream to peer:', call.peer);
           
-          // Add viewer to the list
-          setViewers(prev => {
-            if (!prev.includes(call.peer)) {
-              return [...prev, call.peer];
-            }
-            return prev;
+          // Handle the viewer's stream
+          call.on('stream', (viewerStream) => {
+            console.log('Received stream from viewer:', call.peer);
+            setViewers(prev => {
+              if (!prev.find(v => v.id === call.peer)) {
+                return [...prev, { id: call.peer, stream: viewerStream }];
+              }
+              return prev;
+            });
           });
 
-          // Handle call events
           call.on('close', () => {
             console.log('Call closed with peer:', call.peer);
-            setViewers(prev => prev.filter(id => id !== call.peer));
+            setViewers(prev => prev.filter(v => v.id !== call.peer));
           });
 
           call.on('error', (err) => {
             console.error('Call error with peer:', call.peer, err);
-            setViewers(prev => prev.filter(id => id !== call.peer));
+            setViewers(prev => prev.filter(v => v.id !== call.peer));
           });
 
         } catch (error) {
@@ -123,7 +125,7 @@ const Broadcaster: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800">Broadcaster</h1>
           <button
@@ -135,13 +137,38 @@ const Broadcaster: React.FC = () => {
         </div>
 
         <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <video
-            ref={videoRef}
-            autoPlay
-            playsInline
-            muted
-            className="w-full rounded-lg mb-4"
-          />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+            <div className="relative">
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full rounded-lg bg-black"
+                style={{ minHeight: '300px' }}
+              />
+              <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded">
+                You (Broadcaster)
+              </div>
+            </div>
+            {viewers.map((viewer) => (
+              <div key={viewer.id} className="relative">
+                <video
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full rounded-lg bg-black"
+                  style={{ minHeight: '300px' }}
+                  ref={(el) => {
+                    if (el) el.srcObject = viewer.stream;
+                  }}
+                />
+                <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded">
+                  Viewer {viewer.id.slice(0, 4)}
+                </div>
+              </div>
+            ))}
+          </div>
           
           <div className="space-y-4">
             {!isStreaming ? (
@@ -183,10 +210,10 @@ const Broadcaster: React.FC = () => {
           <div className="bg-white rounded-lg shadow-lg p-6">
             <h2 className="text-xl font-semibold mb-4">Connected Viewers ({viewers.length})</h2>
             <div className="space-y-2">
-              {viewers.map((viewerId) => (
-                <div key={viewerId} className="flex items-center space-x-2">
+              {viewers.map((viewer) => (
+                <div key={viewer.id} className="flex items-center space-x-2">
                   <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-600">{viewerId}</span>
+                  <span className="text-gray-600">{viewer.id}</span>
                 </div>
               ))}
             </div>
