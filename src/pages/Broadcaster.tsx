@@ -1,11 +1,21 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Peer from 'peerjs';
+import { IoHome } from 'react-icons/io5';
+import { IoCopy } from 'react-icons/io5';
+import { IoEye } from 'react-icons/io5';
 
 interface Viewer {
   id: string;
   stream: MediaStream;
 }
+
+const getViewerWidthClass = (totalViewers: number) => {
+  if (totalViewers === 1) return 'w-full';
+  if (totalViewers === 2) return 'w-[calc(50%-6px)]';
+  if (totalViewers === 3) return 'w-[calc(33.333%-8px)]';
+  return 'w-[calc(25%-8px)]';
+};
 
 const Broadcaster: React.FC = () => {
   const [peerId, setPeerId] = useState<string>('');
@@ -29,11 +39,11 @@ const Broadcaster: React.FC = () => {
 
   const startBroadcasting = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        video: true, 
-        audio: true 
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: true,
+        audio: true
       });
-      
+
       streamRef.current = stream;
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -52,18 +62,16 @@ const Broadcaster: React.FC = () => {
 
       peer.on('call', (call) => {
         console.log('Received call from:', call.peer);
-        
+
         if (!streamRef.current) {
           console.error('No stream available to share');
           return;
         }
 
         try {
-          // Answer the call with our stream
           call.answer(streamRef.current);
           console.log('Answered call with stream to peer:', call.peer);
-          
-          // Handle the viewer's stream
+
           call.on('stream', (viewerStream) => {
             console.log('Received stream from viewer:', call.peer);
             setViewers(prev => {
@@ -124,102 +132,101 @@ const Broadcaster: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800">Broadcaster</h1>
-          <button
-            onClick={() => navigate('/')}
-            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
-          >
-            Back to Home
-          </button>
+    <div className="min-h-screen bg-gray-100 p-8 relative">
+      <div className="absolute inset-0 z-0">
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className="w-screen h-screen object-cover min-h-screen"
+        />
+        <div className="absolute inset-0 bg-black/50"></div>
+      </div>
+      <div className="max-w-full min-h-[calc(100vh-4rem)] relative z-10 flex justify-between">
+        <div className='w-full md:w-[40%] lg:w-[30%] xl:w-[25%] md:max-w-[420px] min-h-[calc(100vh-4rem)] h-full flex flex-col justify-between'>
+          <div className='header'>
+            <div className="flex justify-start items-center mb-8">
+              <button
+                onClick={() => navigate('/')}
+                className="bg-white/10 text-white p-2 hover:bg-white/20 backdrop-blur-sm mr-4"
+              >
+                <IoHome className="w-6 h-6" />
+              </button>
+              <h1 className="text-3xl font-bold text-white">Broadcaster</h1>
+            </div>
+          </div>
+
+          <div className='actions'>
+            <div className="space-y-4">
+              {!isStreaming ? (
+                <button
+                  onClick={startBroadcasting}
+                  className="w-full bg-indigo-900 text-white py-3 px-6 hover:bg-blue-700"
+                >
+                  Start Broadcasting
+                </button>
+              ) : (
+                <>
+                  <div className="flex items-center space-x-4">
+                    <input
+                      type="text"
+                      value={peerId}
+                      readOnly
+                      className="flex-1 p-2 border"
+                      placeholder="Your Peer ID will appear here"
+                    />
+                    <button
+                      onClick={copyPeerId}
+                      className="bg-green-600 text-white p-2 hover:bg-green-700"
+                      title='Copy ID'
+                    >
+                      <IoCopy className="w-6 h-6" />
+                    </button>
+                  </div>
+                  <button
+                    onClick={stopBroadcasting}
+                    className="w-full bg-red-600 text-white py-3 px-6 hover:bg-red-700"
+                  >
+                    End Broadcasting
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="bg-white rounded-lg shadow-lg p-6 mb-8">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-            <div className="relative">
+        <div className="w-full md:w-[40%] lg:w-[30%] xl:w-[25%] min-h-[calc(100vh-4rem)] hidden md:flex flex-wrap gap-3">
+          {viewers.map((viewer) => (
+            <div
+              key={viewer.id}
+              className={`relative bg-black/50 overflow-hidden backdrop-blur-sm aspect-video ${getViewerWidthClass(viewers.length)} flex-auto`}
+            >
               <video
-                ref={videoRef}
                 autoPlay
                 playsInline
                 muted
-                className="w-full rounded-lg bg-black"
-                style={{ minHeight: '300px' }}
+                className="w-full h-full object-cover bg-black"
+                ref={(el) => {
+                  if (el) el.srcObject = viewer.stream;
+                }}
               />
-              <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded">
-                You (Broadcaster)
+              <div className="absolute bottom-2 left-2 bg-black/50 text-white px-2 py-1 backdrop-blur-sm">
+                Viewer {viewer.id.slice(0, 4)}
               </div>
             </div>
-            {viewers.map((viewer) => (
-              <div key={viewer.id} className="relative">
-                <video
-                  autoPlay
-                  playsInline
-                  muted
-                  className="w-full rounded-lg bg-black"
-                  style={{ minHeight: '300px' }}
-                  ref={(el) => {
-                    if (el) el.srcObject = viewer.stream;
-                  }}
-                />
-                <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded">
-                  Viewer {viewer.id.slice(0, 4)}
-                </div>
-              </div>
-            ))}
-          </div>
-          
-          <div className="space-y-4">
-            {!isStreaming ? (
-              <button
-                onClick={startBroadcasting}
-                className="w-full bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700"
-              >
-                Start Broadcasting
-              </button>
-            ) : (
-              <>
-                <div className="flex items-center space-x-4">
-                  <input
-                    type="text"
-                    value={peerId}
-                    readOnly
-                    className="flex-1 p-2 border rounded"
-                    placeholder="Your Peer ID will appear here"
-                  />
-                  <button
-                    onClick={copyPeerId}
-                    className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-                  >
-                    Copy ID
-                  </button>
-                </div>
-                <button
-                  onClick={stopBroadcasting}
-                  className="w-full bg-red-600 text-white py-3 px-6 rounded-lg hover:bg-red-700"
-                >
-                  Stop Broadcasting
-                </button>
-              </>
-            )}
-          </div>
+          ))}
         </div>
-
-        {viewers.length > 0 && (
-          <div className="bg-white rounded-lg shadow-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Connected Viewers ({viewers.length})</h2>
-            <div className="space-y-2">
-              {viewers.map((viewer) => (
-                <div key={viewer.id} className="flex items-center space-x-2">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-600">{viewer.id}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </div>
+
+      {viewers.length > 0 && (
+        <div className="block md:hidden bg-white/10 text-white p-2 backdrop-blur-sm fixed top-[50%] right-[2rem]">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <IoEye className="w-8 h-8" />
+            <span>{viewers.length}</span>
+          </h2>
+        </div>
+      )}
     </div>
   );
 };

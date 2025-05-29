@@ -1,6 +1,6 @@
 # Video Conference Application
 
-A one-to-many video conferencing application built with React and WebRTC (PeerJS). This application allows one user to broadcast their video stream to multiple viewers without requiring a backend server.
+A video conferencing application built with React and WebRTC (PeerJS). This application allows one user to broadcast their video stream to multiple viewers without requiring a backend server.
 
 ## Features
 
@@ -36,13 +36,13 @@ npm install
 npm run start:client
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+4. Open your browser and navigate to `http://localhost:3000`
 
 ## How to Use
 
 ### As a Broadcaster
 
-1. Click the "Start Broadcasting" button on the home page
+1. Click the "Join as Broadcaster" button on the home page
 2. Allow camera and microphone access when prompted
 3. Once connected, you'll see your video stream and a Peer ID
 4. Copy your Peer ID and share it with viewers
