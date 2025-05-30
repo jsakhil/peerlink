@@ -132,14 +132,14 @@ const Broadcaster: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8 relative">
+    <div className="min-h-[100dvh] bg-gray-100 p-8 relative">
       <div className="absolute inset-0 z-0">
         <video
           ref={videoRef}
           autoPlay
           playsInline
-          muted
-          className="w-screen h-screen object-cover min-h-screen"
+          poster='/milkyway.webp'
+          className="w-screen h-[100dvh] object-cover min-h-[100dvh]"
         />
         <div className="absolute inset-0 bg-black/50"></div>
       </div>

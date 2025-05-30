@@ -2,7 +2,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import Broadcaster from './pages/Broadcaster';
 import Viewer from './pages/Viewer';
-import './App.css';
 
 function App() {
   return (
