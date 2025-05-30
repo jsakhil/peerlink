@@ -143,8 +143,8 @@ const Broadcaster: React.FC = () => {
         />
         <div className="absolute inset-0 bg-black/50"></div>
       </div>
-      <div className="max-w-full min-h-[calc(100vh-4rem)] relative z-10 flex justify-between">
-        <div className='w-full md:w-[40%] lg:w-[30%] xl:w-[25%] md:max-w-[420px] min-h-[calc(100vh-4rem)] h-full flex flex-col justify-between'>
+      <div className="max-w-full min-h-[calc(100dvh-4rem)] relative z-10 flex justify-between">
+        <div className='w-full md:w-[40%] lg:w-[30%] xl:w-[25%] md:max-w-[420px] min-h-[calc(100dvh-4rem)] h-full flex flex-col justify-between'>
           <div className='header'>
             <div className="flex justify-start items-center mb-8">
               <button
@@ -196,7 +196,7 @@ const Broadcaster: React.FC = () => {
           </div>
         </div>
 
-        <div className="w-full md:w-[40%] lg:w-[30%] xl:w-[25%] min-h-[calc(100vh-4rem)] hidden md:flex flex-wrap gap-3">
+        <div className="w-full md:w-[40%] lg:w-[30%] xl:w-[25%] min-h-[calc(100dvh-4rem)] hidden md:flex flex-wrap gap-3">
           {viewers.map((viewer) => (
             <div
               key={viewer.id}
